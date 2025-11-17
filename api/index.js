@@ -5,6 +5,7 @@ import cors from 'cors';
 import { hash as bcryptHash, compare as bcryptCompare } from '../src/lib/bcrypt.js';
 import jwt from 'jsonwebtoken';
 import dotenv from 'dotenv';
+
 // Load .env.local first for local development, then fall back to .env
 try {
   dotenv.config({ path: '.env.local' });
@@ -24,27 +25,53 @@ import { WatchHistory } from '../src/api/models/WatchHistory.js';
 import { Settings } from '../src/api/models/Settings.js';
 
 const app = express();
+
+// Log environment setup
+console.log('[API] Initializing Sunflix API Server');
+console.log('[API] MONGODB_URI available:', !!process.env.VITE_MONGODB_URI);
+console.log('[API] JWT_SECRET available:', !!process.env.JWT_SECRET);
+
 const JWT_SECRET = process.env.JWT_SECRET || 'your-secret-key-change-in-production';
-const MONGODB_URI = process.env.VITE_MONGODB_URI;
+const MONGODB_URI = process.env.VITE_MONGODB_URI || process.env.MONGODB_URI;
+
+if (!MONGODB_URI) {
+  console.error('[API] ERROR: VITE_MONGODB_URI environment variable is not set!');
+}
 
 // Middleware
 app.use(cors());
 app.use(express.json());
 
+// Health check endpoint
+app.get('/api/health', (req, res) => {
+  res.json({ 
+    status: 'ok', 
+    mongoConnected: mongoose.connection.readyState === 1,
+    timestamp: new Date().toISOString()
+  });
+});
+
 // Connect to MongoDB
 let isConnected = false;
 
 const connectToDatabase = async () => {
-  if (isConnected) return;
+  if (isConnected || mongoose.connection.readyState === 1) {
+    return;
+  }
   try {
+    console.log('[API] Connecting to MongoDB...');
     await mongoose.connect(MONGODB_URI, {
       useNewUrlParser: true,
       useUnifiedTopology: true,
+      maxPoolSize: 5,
+      serverSelectionTimeoutMS: 5000,
+      socketTimeoutMS: 45000,
     });
     isConnected = true;
-    console.log('Connected to MongoDB');
+    console.log('[API] Connected to MongoDB successfully');
   } catch (error) {
-    console.error('MongoDB connection error:', error);
+    console.error('[API] MongoDB connection error:', error.message);
+    isConnected = false;
     throw error;
   }
 };

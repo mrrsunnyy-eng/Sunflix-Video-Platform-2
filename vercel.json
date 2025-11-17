@@ -6,11 +6,11 @@
     "VITE_DB_NAME": "sunflix"
   },
   "rewrites": [
-    { "source": "/api/(.*)", "destination": "/api" }
+    { "source": "/api/(.*)", "destination": "/api/handler" }
   ],
   "functions": {
-    "api/index.js": {
-      "memory": 512,
+    "api/handler.js": {
+      "memory": 1024,
       "maxDuration": 60
     }
   }
