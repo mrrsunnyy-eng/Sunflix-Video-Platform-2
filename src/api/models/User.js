@@ -45,4 +45,4 @@ const userSchema = new mongoose.Schema(
   { timestamps: true }
 );
 
-export default mongoose.models.WatchHistory || mongoose.model('WatchHistory', watchHistorySchema);
+export default mongoose.models.User || mongoose.model('User', userSchema);
