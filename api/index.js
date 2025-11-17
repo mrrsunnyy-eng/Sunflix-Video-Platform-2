@@ -39,7 +39,9 @@ if (!MONGODB_URI) {
 }
 
 // Middleware
-app.use(cors());
+// Allow CORS from any origin so frontend deployed on a different domain can call the API.
+// In production you can replace with a specific origin or allowlist.
+app.use(cors({ origin: true, credentials: true }));
 app.use(express.json());
 
 // Health check endpoint
@@ -317,6 +319,32 @@ app.get('/api/ads', async (req, res) => {
     res.status(500).json({ error: 'Failed to fetch ads' });
   }
 });
+
+// =====================================================
+// MESSAGE ROUTES (missing in serverless entry)
+// =====================================================
+
+app.get('/api/messages', async (req, res) => {
+  await connectToDatabase();
+  try {
+    const messages = await Message.find().sort({ createdAt: -1 });
+    res.json(messages);
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to fetch messages' });
+  }
+});
+
+app.post('/api/messages', async (req, res) => {
+  await connectToDatabase();
+  try {
+    const message = new Message(req.body);
+    await message.save();
+    res.json(message);
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to create message' });
+  }
+});
+
 
 app.post('/api/ads', verifyToken, async (req, res) => {
   await connectToDatabase();
