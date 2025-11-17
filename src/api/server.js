@@ -26,8 +26,8 @@ import { Settings } from './models/Settings.js';
 
 const app = express();
 const PORT = process.env.PORT || 3001;
-const JWT_SECRET = process.env.JWT_SECRET;
-const MONGODB_URI = process.env.VITE_MONGODB_URI;
+const JWT_SECRET = process.env.JWT_SECRET || 'your-secret-key-change-in-production';
+const MONGODB_URI = process.env.VITE_MONGODB_URI || 'mongodb+srv://rizqaratech_db_user:i3PYU789a4VXwWEu@sunflix.a9egezc.mongodb.net/?appName=sunflix';
 
 // Middleware
 app.use(cors());

@@ -35,4 +35,4 @@ const adSchema = new mongoose.Schema(
   { timestamps: true }
 );
 
-export default mongoose.models.Ad || mongoose.model('Ad', adSchema);
+export const Ad = mongoose.model('Ad', adSchema);
