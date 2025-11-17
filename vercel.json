@@ -1,6 +1,6 @@
 {
   "buildCommand": "npm run build",
-  "outputDirectory": "build",
+  "outputDirectory": "dist",
   "devCommand": "npm run dev:full",
   "env": {
     "VITE_MONGODB_URI": "@vite_mongodb_uri",

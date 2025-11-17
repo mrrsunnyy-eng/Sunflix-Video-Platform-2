@@ -1,5 +1,5 @@
 import mongoose from 'mongoose';
-import bcrypt from 'bcrypt';
+import { hash as bcryptHash } from '../src/lib/bcrypt.js';
 import dotenv from 'dotenv';
 
 dotenv.config();
@@ -21,7 +21,7 @@ async function initializeDatabase() {
     const adminExists = await User.findOne({ email: 'admin@sunflix.com' });
     
     if (!adminExists) {
-      const hashedPassword = await bcrypt.hash('admin123', 10);
+      const hashedPassword = await bcryptHash('admin123', 10);
       const admin = new User({
         name: 'Administrator',
         email: 'admin@sunflix.com',

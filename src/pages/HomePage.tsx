@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { Flame, Sparkles, Star, TrendingUp, Play, Music, Gamepad2, Cpu, Laugh, GraduationCap, Film } from 'lucide-react';
 import { VideoCard } from '../components/VideoCard';
+import { AdBanner } from '../components/AdBanner';
 import { CategoryCard } from '../components/CategoryCard';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '../components/ui/tabs';
 import type { Video } from '../types';
@@ -58,6 +59,10 @@ export function HomePage() {
           </h1>
         </motion.div>
 
+        {/* Banner Ad */}
+        <div className="mb-8">
+          <AdBanner position="banner" className="w-full h-48 rounded-lg overflow-hidden" />
+        </div>
         {/* All Videos Section */}
         <section className="mb-12">
           <motion.div

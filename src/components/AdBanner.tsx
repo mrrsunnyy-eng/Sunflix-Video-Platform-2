@@ -24,7 +24,8 @@ export function AdBanner({ position, className = '' }: AdBannerProps) {
       setAd(picked);
       // increment impression count (best-effort)
       try {
-        await updateAd(picked.id, { impressions: (picked.impressions || 0) + 1 });
+        const adId = picked.id || picked._id;
+        await updateAd(adId, { impressions: (picked.impressions || 0) + 1 });
       } catch (e) {
         // ignore
         // eslint-disable-next-line no-console
@@ -37,15 +38,18 @@ export function AdBanner({ position, className = '' }: AdBannerProps) {
   const handleClick = async () => {
     if (ad) {
       try {
-        await updateAd(ad.id, { clicks: (ad.clicks || 0) + 1 });
+        const adId = ad.id || ad._id;
+        await updateAd(adId, { clicks: (ad.clicks || 0) + 1 });
       } catch (e) {
         // ignore
         // eslint-disable-next-line no-console
         console.error('Failed to track ad click', e);
       }
-      window.open(ad.clickUrl, '_blank');
+      if (ad.clickUrl) window.open(ad.clickUrl, '_blank');
     }
   };
+  // If no ad available for this position, render nothing (avoids runtime errors)
+  if (!ad) return null;
 
   return (
     <motion.div
@@ -58,8 +62,8 @@ export function AdBanner({ position, className = '' }: AdBannerProps) {
         Sponsored
       </div>
       <img
-        src={ad.imageUrl}
-        alt={ad.title}
+        src={ad.imageUrl || ''}
+        alt={ad.title || 'Sponsored'}
         className="w-full h-auto rounded-lg border border-white/10 group-hover:border-[#FFB800]/50 transition-all"
       />
       <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent opacity-0 group-hover:opacity-100 transition-opacity rounded-lg" />

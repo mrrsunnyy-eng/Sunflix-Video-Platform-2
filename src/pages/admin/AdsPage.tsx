@@ -41,8 +41,23 @@ export function AdsPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
+    // Validate required fields
+    if (!formData.title.trim()) {
+      toast.error('Ad title is required');
+      return;
+    }
+    if (!formData.imageUrl.trim()) {
+      toast.error('Ad image URL or upload is required');
+      return;
+    }
+    if (!formData.clickUrl.trim()) {
+      toast.error('Click URL is required');
+      return;
+    }
+
     if (editingAd) {
-      const updated = await updateAd(editingAd.id, { ...editingAd, ...formData });
+      const adId = editingAd.id || editingAd._id;
+      const updated = await updateAd(adId, { ...editingAd, ...formData });
       if (updated) toast.success('Ad updated successfully!');
       else toast.error('Failed to update ad');
     } else {
@@ -86,7 +101,7 @@ export function AdsPage() {
   };
 
   const toggleActive = async (id: string) => {
-    const current = ads.find(a => a.id === id);
+    const current = ads.find(a => (a.id || a._id) === id);
     if (!current) return;
     const updated = await updateAd(id, { active: !current.active });
     if (updated) {
@@ -223,8 +238,9 @@ export function AdsPage() {
             <TableBody>
               {ads.map((ad) => {
                 const adCtr = ad.impressions > 0 ? ((ad.clicks / ad.impressions) * 100).toFixed(2) : '0';
+                const adId = ad.id || ad._id;
                 return (
-                  <TableRow key={ad.id} className="border-white/10">
+                  <TableRow key={adId} className="border-white/10">
                     <TableCell className="text-white">{ad.title}</TableCell>
                     <TableCell className="text-[#A0A0A0] capitalize">{ad.position}</TableCell>
                     <TableCell>
@@ -240,7 +256,7 @@ export function AdsPage() {
                         <Button
                           size="sm"
                           variant="ghost"
-                          onClick={() => toggleActive(ad.id)}
+                          onClick={() => toggleActive(adId)}
                           className="hover:bg-white/10"
                         >
                           {ad.active ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
@@ -256,7 +272,7 @@ export function AdsPage() {
                         <Button
                           size="sm"
                           variant="ghost"
-                          onClick={() => handleDelete(ad.id)}
+                          onClick={() => handleDelete(adId)}
                           className="hover:bg-red-500/20 text-red-400"
                         >
                           <Trash2 className="w-4 h-4" />

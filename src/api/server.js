@@ -1,7 +1,7 @@
 import express from 'express';
 import mongoose from 'mongoose';
 import cors from 'cors';
-import bcrypt from 'bcrypt';
+import { hash as bcryptHash, compare as bcryptCompare } from '../lib/bcrypt.js';
 import jwt from 'jsonwebtoken';
 import dotenv from 'dotenv';
 
@@ -132,7 +132,7 @@ app.post('/api/auth/signup', async (req, res) => {
     }
 
     // Hash password
-    const hashedPassword = await bcrypt.hash(password, 10);
+    const hashedPassword = await bcryptHash(password, 10);
 
     // Create user
     const user = new User({
@@ -183,7 +183,7 @@ app.post('/api/auth/login', async (req, res) => {
     }
 
     // Check password
-    const isValidPassword = await bcrypt.compare(password, user.password);
+    const isValidPassword = await bcryptCompare(password, user.password);
     if (!isValidPassword) {
       return res.status(401).json({ error: 'Invalid credentials' });
     }
@@ -226,7 +226,7 @@ app.post('/api/auth/admin-login', async (req, res) => {
     }
 
     // Check password
-    const isValidPassword = await bcrypt.compare(password, user.password);
+    const isValidPassword = await bcryptCompare(password, user.password);
     if (!isValidPassword) {
       return res.status(401).json({ error: 'Invalid admin credentials' });
     }
@@ -674,11 +674,26 @@ app.post('/api/ads', verifyToken, async (req, res) => {
       return res.status(403).json({ error: 'Unauthorized' });
     }
 
-    const ad = new Ad(req.body);
+    const { title, imageUrl, clickUrl, position, active } = req.body;
+    
+    // Validate required fields
+    if (!title || !imageUrl || !clickUrl) {
+      return res.status(400).json({ error: 'Missing required fields: title, imageUrl, clickUrl' });
+    }
+
+    const ad = new Ad({
+      title,
+      imageUrl,
+      clickUrl,
+      position: position || 'banner',
+      active: active !== false,
+      impressions: 0,
+      clicks: 0,
+    });
     await ad.save();
     res.json(ad);
   } catch (error) {
-    res.status(500).json({ error: 'Failed to create ad' });
+    res.status(500).json({ error: 'Failed to create ad', details: error.message });
   }
 });
 

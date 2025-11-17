@@ -2,7 +2,7 @@
 import express from 'express';
 import mongoose from 'mongoose';
 import cors from 'cors';
-import bcrypt from 'bcrypt';
+import { hash as bcryptHash, compare as bcryptCompare } from '../src/lib/bcrypt.js';
 import jwt from 'jsonwebtoken';
 import dotenv from 'dotenv';
 // Load .env.local first for local development, then fall back to .env
@@ -82,7 +82,7 @@ app.post('/api/auth/signup', async (req, res) => {
       return res.status(400).json({ error: 'User already exists' });
     }
 
-    const hashedPassword = await bcrypt.hash(password, 10);
+    const hashedPassword = await bcryptHash(password, 10);
 
     const user = new User({
       name,
@@ -130,7 +130,7 @@ app.post('/api/auth/login', async (req, res) => {
       return res.status(401).json({ error: 'Invalid credentials' });
     }
 
-    const isValidPassword = await bcrypt.compare(password, user.password);
+    const isValidPassword = await bcryptCompare(password, user.password);
     if (!isValidPassword) {
       return res.status(401).json({ error: 'Invalid credentials' });
     }
@@ -171,7 +171,7 @@ app.post('/api/auth/admin-login', async (req, res) => {
       return res.status(401).json({ error: 'Invalid admin credentials' });
     }
 
-    const isValidPassword = await bcrypt.compare(password, user.password);
+    const isValidPassword = await bcryptCompare(password, user.password);
     if (!isValidPassword) {
       return res.status(401).json({ error: 'Invalid admin credentials' });
     }
@@ -274,6 +274,87 @@ app.get('/api/videos/:id', async (req, res) => {
     res.json(video);
   } catch (error) {
     res.status(500).json({ error: 'Failed to fetch video' });
+  }
+});
+
+// =====================================================
+// ADS ROUTES
+// =====================================================
+
+app.get('/api/ads', async (req, res) => {
+  await connectToDatabase();
+  try {
+    const ads = await Ad.find({ active: true });
+    res.json(ads);
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to fetch ads' });
+  }
+});
+
+app.post('/api/ads', verifyToken, async (req, res) => {
+  await connectToDatabase();
+  try {
+    const user = await User.findById(req.userId);
+    if (!user || user.role !== 'admin') {
+      return res.status(403).json({ error: 'Unauthorized' });
+    }
+
+    const { title, imageUrl, clickUrl, position, active } = req.body;
+    
+    // Validate required fields
+    if (!title || !imageUrl || !clickUrl) {
+      return res.status(400).json({ error: 'Missing required fields: title, imageUrl, clickUrl' });
+    }
+
+    const ad = new Ad({
+      title,
+      imageUrl,
+      clickUrl,
+      position: position || 'banner',
+      active: active !== false,
+      impressions: 0,
+      clicks: 0,
+    });
+    await ad.save();
+    res.json(ad);
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to create ad', details: error.message });
+  }
+});
+
+app.put('/api/ads/:id', verifyToken, async (req, res) => {
+  await connectToDatabase();
+  try {
+    const user = await User.findById(req.userId);
+    if (!user || user.role !== 'admin') {
+      return res.status(403).json({ error: 'Unauthorized' });
+    }
+
+    const ad = await Ad.findByIdAndUpdate(req.params.id, req.body, { new: true });
+    if (!ad) {
+      return res.status(404).json({ error: 'Ad not found' });
+    }
+    res.json(ad);
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to update ad' });
+  }
+});
+
+app.delete('/api/ads/:id', verifyToken, async (req, res) => {
+  await connectToDatabase();
+  try {
+    const user = await User.findById(req.userId);
+    if (!user || user.role !== 'admin') {
+      return res.status(403).json({ error: 'Unauthorized' });
+    }
+
+    const ad = await Ad.findByIdAndDelete(req.params.id);
+    if (!ad) {
+      return res.status(404).json({ error: 'Ad not found' });
+    }
+    res.json({ success: true });
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to delete ad' });
   }
 });
 
