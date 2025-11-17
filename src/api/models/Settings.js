@@ -28,4 +28,4 @@ const settingsSchema = new mongoose.Schema(
   { timestamps: true }
 );
 
-export const Settings = mongoose.model('Settings', settingsSchema);
+export default mongoose.models.Settings || mongoose.model('Settings', settingsSchema);
