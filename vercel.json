@@ -3,9 +3,6 @@
   "outputDirectory": "dist",
   "devCommand": "npm run dev:full",
   "env": {
-    "VITE_MONGODB_URI": "@vite_mongodb_uri",
-    "VITE_API_URL": "https://$VERCEL_PROJECT_NAME.vercel.app",
-    "JWT_SECRET": "@jwt_secret",
     "VITE_DB_NAME": "sunflix"
   },
   "functions": {
