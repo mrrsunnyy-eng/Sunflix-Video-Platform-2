@@ -5,6 +5,9 @@
   "env": {
     "VITE_DB_NAME": "sunflix"
   },
+  "rewrites": [
+    { "source": "/api/(.*)", "destination": "/api" }
+  ],
   "functions": {
     "api/index.js": {
       "memory": 512,

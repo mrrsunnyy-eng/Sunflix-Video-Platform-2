@@ -358,4 +358,10 @@ app.delete('/api/ads/:id', verifyToken, async (req, res) => {
   }
 });
 
+
 export default app;
+
+// Export handler for Vercel serverless functions
+export const handler = (req, res) => {
+  return app(req, res);
+};
