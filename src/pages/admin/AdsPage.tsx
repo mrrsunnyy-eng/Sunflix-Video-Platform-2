@@ -33,7 +33,9 @@ export function AdsPage() {
 
   const loadAds = async () => {
     const all = await getAllAds();
-    setAds(all || []);
+    // Normalize Mongo _id to id for frontend convenience
+    const normalized = (all || []).map((a: any) => ({ ...a, id: a._id || a.id }));
+    setAds(normalized);
   };
 
   const handleSubmit = async (e: React.FormEvent) => {

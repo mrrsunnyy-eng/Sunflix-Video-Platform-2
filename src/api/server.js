@@ -5,6 +5,13 @@ import bcrypt from 'bcrypt';
 import jwt from 'jsonwebtoken';
 import dotenv from 'dotenv';
 
+// Load environment variables. Prefer .env.local for local development if present,
+// then fall back to .env and process.env.
+try {
+  dotenv.config({ path: '.env.local' });
+} catch (e) {
+  // ignore
+}
 dotenv.config();
 
 // Import models
@@ -26,10 +33,70 @@ const MONGODB_URI = process.env.VITE_MONGODB_URI || 'mongodb+srv://rizqaratech_d
 app.use(cors());
 app.use(express.json());
 
-// Connect to MongoDB
-mongoose.connect(MONGODB_URI)
-  .then(() => console.log('Connected to MongoDB'))
-  .catch(err => console.error('MongoDB connection error:', err));
+// Connect to MongoDB with retry logic
+let isConnected = false;
+const connectToDatabase = async (retries = 3, delayMs = 2000) => {
+  if (isConnected) return;
+  for (let i = 0; i < retries; i++) {
+    try {
+      await mongoose.connect(MONGODB_URI, {
+        // Mongoose v6+ doesn't need useNewUrlParser/useUnifiedTopology but keep options stable
+        serverSelectionTimeoutMS: 5000,
+      });
+      isConnected = true;
+      console.log('Connected to MongoDB');
+      return;
+    } catch (err) {
+      console.error(`MongoDB connection attempt ${i + 1} failed:`, err.message || err);
+      if (i < retries - 1) await new Promise((res) => setTimeout(res, delayMs));
+    }
+  }
+  console.error('Failed to connect to MongoDB after retries');
+};
+
+// Start initial connection
+connectToDatabase().catch((e) => console.error('Initial MongoDB connect error:', e));
+
+// Listen for Mongoose connection events and try to reconnect on disconnects
+mongoose.connection.on('connected', () => {
+  console.log('Mongoose connection: connected');
+  isConnected = true;
+});
+
+mongoose.connection.on('error', (err) => {
+  console.error('Mongoose connection error:', err && err.message ? err.message : err);
+});
+
+mongoose.connection.on('disconnected', () => {
+  console.warn('Mongoose connection disconnected — attempting to reconnect');
+  isConnected = false;
+  // Try reconnecting with exponential backoff
+  (async function retryConnect() {
+    let attempt = 0;
+    while (!isConnected && attempt < 10) {
+      attempt += 1;
+      try {
+        await connectToDatabase(1, Math.min(2000 * attempt, 30000));
+        if (isConnected) {
+          console.log('Reconnected to MongoDB after disconnect');
+          return;
+        }
+      } catch (e) {
+        console.error(`Reconnect attempt ${attempt} failed:`, e && e.message ? e.message : e);
+      }
+      // wait before next attempt
+      await new Promise((res) => setTimeout(res, Math.min(2000 * attempt, 30000)));
+    }
+    if (!isConnected) {
+      console.error('Could not reconnect to MongoDB after multiple attempts');
+    }
+  })();
+});
+
+mongoose.connection.on('reconnected', () => {
+  console.log('Mongoose connection: reconnected');
+  isConnected = true;
+});
 
 // Middleware to verify JWT token
 const verifyToken = (req, res, next) => {

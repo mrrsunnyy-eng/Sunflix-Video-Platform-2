@@ -5,7 +5,12 @@ import cors from 'cors';
 import bcrypt from 'bcrypt';
 import jwt from 'jsonwebtoken';
 import dotenv from 'dotenv';
-
+// Load .env.local first for local development, then fall back to .env
+try {
+  dotenv.config({ path: '.env.local' });
+} catch (e) {
+  // ignore
+}
 dotenv.config();
 
 // Import models

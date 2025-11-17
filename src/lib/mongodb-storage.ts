@@ -121,7 +121,9 @@ export async function getAllVideos(category?: string): Promise<Video[]> {
     const params = new URLSearchParams();
     if (category) params.append('category', category);
     const response = await apiClient.get(`/api/videos?${params}`);
-    return response.data || [];
+    const videos = response.data || [];
+    // Normalize MongoDB _id to id for frontend consistency
+    return (videos || []).map((v: any) => ({ ...v, id: v._id || v.id }));
   } catch (error) {
     console.error('Error fetching videos:', error);
     return [];
@@ -371,7 +373,9 @@ export async function markNotificationAsRead(id: string): Promise<boolean> {
 export async function getAllAds(): Promise<Ad[]> {
   try {
     const response = await apiClient.get('/api/ads');
-    return response.data || [];
+    // Normalize _id to id for frontend consistency
+    const ads = response.data || [];
+    return ads.map((a: any) => ({ ...a, id: a._id || a.id }));
   } catch (error) {
     console.error('Error fetching ads:', error);
     return [];

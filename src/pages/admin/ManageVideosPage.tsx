@@ -22,7 +22,11 @@ export function ManageVideosPage() {
     apiClient
       .get('/api/videos')
       .then(res => res.data)
-      .then(videos => setVideos(videos))
+      .then((videos: any[]) => {
+        // Normalize MongoDB _id to id for frontend consistency
+        const normalized = (videos || []).map(v => ({ ...v, id: v._id || v.id }));
+        setVideos(normalized as Video[]);
+      })
       .catch(error => {
         console.error('Error loading videos:', error);
         toast.error('Failed to load videos');
@@ -137,12 +141,12 @@ export function ManageVideosPage() {
                         <AlertDialogCancel className="bg-[#0E0E10] border-white/10">
                           Cancel
                         </AlertDialogCancel>
-                        <AlertDialogAction
-                          onClick={() => handleDelete(video.id)}
-                          className="bg-[#FF1744] hover:bg-[#FF1744]/90"
-                        >
-                          Delete
-                        </AlertDialogAction>
+                              <AlertDialogAction
+                                onClick={() => handleDelete(video._id || video.id)}
+                                className="bg-[#FF1744] hover:bg-[#FF1744]/90"
+                              >
+                                Delete
+                              </AlertDialogAction>
                       </AlertDialogFooter>
                     </AlertDialogContent>
                   </AlertDialog>
